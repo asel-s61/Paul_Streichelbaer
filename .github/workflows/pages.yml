@@ -1,11 +1,10 @@
 name: Publish Paul Streichelbaer
 
 on:
-  push:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
     branches: [main]
-    paths:
-      - streichelzeit-deploy.tar.gz
-      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:
