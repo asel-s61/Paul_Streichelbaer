@@ -1,0 +1,53 @@
+name: Publish Paul Streichelbaer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - streichelzeit-deploy.tar.gz
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paul-github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Extract playable website
+        run: |
+          mkdir -p _site
+          tar -xzf streichelzeit-deploy.tar.gz --strip-components=1 -C _site \
+            dist/index.html dist/style.css dist/app.js dist/arcade.css \
+            dist/arcade.js dist/milk.js dist/portrait.png
+          test -s _site/index.html
+          test -s _site/portrait.png
+          node --check _site/app.js
+          node --check _site/arcade.js
+          node --check _site/milk.js
+          touch _site/.nojekyll
+      - name: Upload website
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
